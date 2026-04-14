@@ -1,0 +1,15 @@
+{
+  "name": "live-agent-cli",
+  "version": "0.1.0",
+  "description": "Natural-language + voice command CLI for Ableton Live",
+  "type": "module",
+  "bin": {
+    "live-agent": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "plan": "node src/index.js plan \"create midi track and load drum rack\"",
+    "actions": "node src/index.js actions",
+    "test": "node --test"
+  }
+}

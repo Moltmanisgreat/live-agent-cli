@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://customliverigs.com/schemas/action-plan.schema.json",
+  "title": "ActionPlan",
+  "type": "object",
+  "required": ["version", "intent", "adapter", "actions", "safety"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "string" },
+    "intent": { "type": "string", "minLength": 1 },
+    "adapter": { "type": "string", "minLength": 1 },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["action", "args"],
+        "additionalProperties": false,
+        "properties": {
+          "action": { "type": "string", "minLength": 1 },
+          "args": { "type": "object" }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": ["mutating", "requiresExecuteFlag"],
+      "additionalProperties": false,
+      "properties": {
+        "mutating": { "type": "boolean" },
+        "requiresExecuteFlag": { "type": "boolean" }
+      }
+    }
+  }
+}

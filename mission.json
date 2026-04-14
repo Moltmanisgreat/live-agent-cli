@@ -1,0 +1,52 @@
+{
+  "mission": "Repair and complete the LiveAgent CLI + remotescript project",
+  "status": "blocked",
+  "activeBatch": 10,
+  "batches": [
+    {
+      "id": 1,
+      "name": "core transport + track basics",
+      "status": "done"
+    },
+    {
+      "id": 2,
+      "name": "scenes + clips",
+      "status": "done"
+    },
+    {
+      "id": 3,
+      "name": "mixer essentials",
+      "status": "done"
+    },
+    {
+      "id": 4,
+      "name": "devices + parameters",
+      "status": "active"
+    },
+    {
+      "id": 5,
+      "name": "browser/load-device path",
+      "status": "pending"
+    },
+    {
+      "id": 6,
+      "name": "arrangement + global controls",
+      "status": "pending"
+    },
+    {
+      "id": 7,
+      "name": "project/save + watches/macros/policy",
+      "status": "active"
+    },
+    {
+      "id": 8,
+      "name": "project/set management",
+      "status": "deferred"
+    }
+  ],
+  "currentStep": "implement and validate macro intelligence layer batch",
+  "currentBlocker": "",
+  "nextAction": "check planner coverage for Batch 10 before implementation",
+  "retryCount": 0,
+  "lastUpdated": "2026-03-19T12:02:48+02:00"
+}

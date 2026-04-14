@@ -1,0 +1,16 @@
+{
+  "version": "0.1",
+  "intent": "Create MIDI track with Drum Rack, arm and record",
+  "adapter": "showcontrol-osc",
+  "actions": [
+    { "action": "create_track", "args": { "type": "midi" } },
+    { "action": "load_device", "args": { "track": "selected", "device": "Drum Rack" } },
+    { "action": "arm_track", "args": { "track": "selected", "value": true } },
+    { "action": "transport_record", "args": { "value": true } },
+    { "action": "transport_play", "args": {} }
+  ],
+  "safety": {
+    "mutating": true,
+    "requiresExecuteFlag": true
+  }
+}

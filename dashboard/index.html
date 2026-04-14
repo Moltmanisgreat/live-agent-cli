@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LiveAgent Mission Dashboard</title>
+  <style>
+    :root { --bg:#0b1020; --panel:#161b22; --border:#30363d; --text:#e6edf3; --muted:#8b949e; --green:#3fb950; --blue:#79c0ff; --yellow:#d29922; --red:#f85149; --purple:#bc8cff; --cyan:#39c5cf; }
+    body { font-family: system-ui, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:20px; }
+    h1 { margin:0 0 6px; color:#7ee787; }
+    .muted { color:var(--muted); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; margin-top:16px; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px; }
+    .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+    .value { font-size:18px; margin-top:4px; word-break:break-word; }
+    .pill { display:inline-block; padding:5px 10px; border-radius:999px; font-weight:700; }
+    .status-active { background:#1f6feb33; color:var(--blue); }
+    .status-waiting { background:#d2992233; color:var(--yellow); }
+    .status-blocked { background:#f8514933; color:var(--red); }
+    .status-soft-stuck { background:#d2992233; color:var(--yellow); }
+    .status-dead-stuck { background:#f8514933; color:var(--red); }
+    .status-deferred { background:#39c5cf33; color:var(--cyan); }
+    .status-idle, .status-done { background:#6e768133; color:#c9d1d9; }
+    .activity-planning { color:var(--purple); } .activity-reading { color:var(--cyan); } .activity-coding { color:var(--purple); }
+    .activity-syncing { color:var(--blue); } .activity-relaunching-live { color:var(--yellow); } .activity-testing { color:var(--green); }
+    .activity-waiting { color:var(--yellow); } .activity-blocked, .activity-dead-stuck { color:var(--red); } .activity-soft-stuck { color:var(--yellow); } .activity-deferred { color:var(--cyan); } .activity-idle, .activity-done { color:#c9d1d9; }
+    .bar { margin-top:10px; width:100%; height:12px; background:#0d1117; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+    .barFill { height:100%; width:0%; background:linear-gradient(90deg,var(--blue),var(--green)); transition:width .3s ease; }
+    ul { margin:8px 0 0 20px; padding:0; }
+    .heartbeat { display:flex; align-items:center; gap:8px; } .dot { width:10px; height:10px; border-radius:50%; background:var(--green); box-shadow:0 0 10px var(--green); }
+    .warnDot { background:var(--yellow); box-shadow:0 0 10px var(--yellow); } .badDot { background:var(--red); box-shadow:0 0 10px var(--red); }
+    .small { font-size:14px; } .activityLabel { font-weight:700; }
+    .banner { margin-top:16px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:#d2992233; color:#f0c674; font-weight:600; }
+  </style>
+</head>
+<body>
+  <h1>LiveAgent Mission Dashboard</h1>
+  <div class="muted" id="stamp">loading…</div>
+  <div id="protocolReminder" class="banner">Protocol reminder loading…</div>
+  <div class="grid">
+    <div class="card"><div class="label">Status</div><div class="value"><span id="statusPill" class="pill">…</span></div><div class="value small activityLabel" id="activity">…</div></div>
+    <div class="card"><div class="label">Protocol Step</div><div class="value" id="protocolLabel">…</div><div class="small muted">Step <span id="protocolStep">…</span></div></div>
+    <div class="card"><div class="label">Batch</div><div class="value" id="batch">…</div></div>
+    <div class="card"><div class="label">Task</div><div class="value" id="task">…</div></div>
+    <div class="card" style="grid-column:1/-1;"><div class="label">Progress</div><div class="value"><span id="progressText">0</span>%</div><div class="bar"><div id="barFill" class="barFill"></div></div></div>
+    <div class="card"><div class="label">Heartbeat</div><div class="value heartbeat"><span id="dot" class="dot"></span><span id="heartbeat">…</span></div><div class="small muted">Watchdog: <span id="watchdog">…</span></div><div class="small muted">Checkpoint complete: <span id="checkpointComplete">…</span></div></div>
+    <div class="card"><div class="label">Last Action</div><div class="value" id="lastAction">…</div></div>
+    <div class="card"><div class="label">Last Result</div><div class="value" id="lastResult">…</div></div>
+    <div class="card"><div class="label">Needs Relaunch</div><div class="value" id="needsRelaunch">…</div></div>
+    <div class="card"><div class="label">Waiting On User</div><div class="value" id="waitingOnUser">…</div></div>
+    <div class="card"><div class="label">Current Blocker</div><div class="value" id="currentBlocker">none</div></div>
+    <div class="card"><div class="label">Next Step</div><div class="value" id="nextStep">…</div></div>
+    <div class="card"><div class="label">Missing Checkpoint Fields</div><div class="value" id="checkpointMissing">none</div></div>
+    <div class="card" style="grid-column:1/-1;"><div class="label">Recent Passes</div><div class="value"><ul id="recentPasses"></ul></div></div>
+    <div class="card" style="grid-column:1/-1;"><div class="label">Notes</div><div class="value"><ul id="notes"></ul></div></div>
+  </div>
+<script>
+function setList(el, items){ el.innerHTML=''; for(const item of (items||[])){ const li=document.createElement('li'); li.textContent=item; el.appendChild(li);} }
+function heartbeatDot(text){ const t=(text||'').toLowerCase(); if(t.includes('stale')||t.includes('dead')) return 'badDot'; if(t.includes('waiting')) return 'warnDot'; return 'dot'; }
+function formatActivity(a){ return (a||'unknown').replace(/-/g, ' '); }
+async function refresh(){
+  const r = await fetch('./status.json?ts=' + Date.now(), {cache:'no-store'});
+  const s = await r.json();
+  stamp.textContent = 'Updated: ' + (s.updatedAt || 'unknown');
+  protocolReminder.textContent = s.protocolReminder || 'Protocol reminder unavailable';
+  statusPill.textContent = s.status || 'unknown'; statusPill.className = 'pill status-' + (s.status || 'idle');
+  activity.textContent = formatActivity(s.activity); activity.className = 'value small activityLabel activity-' + (s.activity || 'idle');
+  protocolLabel.textContent = s.protocolLabel || '—'; protocolStep.textContent = s.protocolStep ?? '—'; batch.textContent = s.batch ?? '—'; task.textContent = s.task ?? '—';
+  const pct = Number(s.progress || 0); progressText.textContent = pct; barFill.style.width = pct + '%';
+  heartbeat.textContent = s.heartbeat || 'unknown'; dot.className = heartbeatDot(s.heartbeat); watchdog.textContent = s.watchdog || 'unknown'; checkpointComplete.textContent = String(!!s.checkpointComplete);
+  lastAction.textContent = s.lastAction || '—'; lastResult.textContent = s.lastResult || '—'; needsRelaunch.textContent = String(!!s.needsRelaunch); waitingOnUser.textContent = String(!!s.waitingOnUser);
+  currentBlocker.textContent = s.currentBlocker || 'none'; nextStep.textContent = s.nextStep || '—'; checkpointMissing.textContent = (s.checkpointMissing && s.checkpointMissing.length) ? s.checkpointMissing.join(', ') : 'none'; setList(recentPasses, s.recentPasses); setList(notes, s.notes);
+}
+refresh(); setInterval(refresh, 2000);
+</script>
+</body>
+</html>
